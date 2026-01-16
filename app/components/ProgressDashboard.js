@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
+import api from '../../lib/api';
+import ErrorMessage from './ErrorMessage';
 
-// Simulated data for demonstration
+// Fallback mock data for when API is not available
 const generateMockData = () => {
-  const categories = ['behavioral', 'technical', 'systemDesign'];
   const lastMonths = [];
   
   for (let i = 5; i >= 0; i--) {
@@ -16,41 +17,35 @@ const generateMockData = () => {
 
   return {
     overallProgress: {
-      totalSessions: 24,
-      totalHours: 18,
-      averageScore: 72,
-      streak: 5
+      totalSessions: 0,
+      totalHours: 0,
+      averageScore: 0,
+      streak: 0
     },
-    monthlyScores: lastMonths.map((month, idx) => ({
+    monthlyScores: lastMonths.map((month) => ({
       month,
-      behavioral: 50 + idx * 5 + Math.floor(Math.random() * 10),
-      technical: 45 + idx * 6 + Math.floor(Math.random() * 10),
-      systemDesign: 40 + idx * 7 + Math.floor(Math.random() * 10)
+      behavioral: 0,
+      technical: 0,
+      systemDesign: 0
     })),
-    recentSessions: [
-      { id: 1, type: 'Technical', date: '2026-01-15', score: 78, duration: 45 },
-      { id: 2, type: 'Behavioral', date: '2026-01-14', score: 85, duration: 30 },
-      { id: 3, type: 'System Design', date: '2026-01-12', score: 65, duration: 50 },
-      { id: 4, type: 'Technical', date: '2026-01-10', score: 72, duration: 40 },
-      { id: 5, type: 'Behavioral', date: '2026-01-08', score: 88, duration: 25 }
-    ],
+    recentSessions: [],
     skillBreakdown: {
-      'Problem Solving': 75,
-      'Communication': 82,
-      'Technical Knowledge': 68,
-      'System Design': 62,
-      'Code Quality': 70,
-      'Time Management': 78
+      'Problem Solving': 50,
+      'Communication': 50,
+      'Technical Knowledge': 50,
+      'System Design': 50,
+      'Code Quality': 50,
+      'Time Management': 50
     },
     weaknesses: [
-      { area: 'System Design Scalability', score: 55, trend: 'improving' },
-      { area: 'Database Optimization', score: 58, trend: 'stable' },
-      { area: 'Distributed Systems', score: 52, trend: 'improving' }
+      { area: 'System Design Scalability', score: 50, trend: 'stable' },
+      { area: 'Database Optimization', score: 50, trend: 'stable' },
+      { area: 'Distributed Systems', score: 50, trend: 'stable' }
     ],
     strengths: [
-      { area: 'Communication Skills', score: 88, trend: 'stable' },
-      { area: 'Problem Decomposition', score: 85, trend: 'improving' },
-      { area: 'Code Clarity', score: 82, trend: 'improving' }
+      { area: 'Communication Skills', score: 50, trend: 'stable' },
+      { area: 'Problem Decomposition', score: 50, trend: 'stable' },
+      { area: 'Code Clarity', score: 50, trend: 'stable' }
     ]
   };
 };
@@ -59,16 +54,46 @@ const ProgressDashboard = () => {
   const { darkMode } = useTheme();
   const [data, setData] = useState(null);
   const [selectedPeriod, setSelectedPeriod] = useState('6m');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Simulate loading data
-    setData(generateMockData());
+    const fetchProgress = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await api.progress.get();
+        if (response.success && response.data) {
+          setData(response.data);
+        } else {
+          // Use mock data if API returns no data
+          setData(generateMockData());
+        }
+      } catch (err) {
+        console.error('Failed to fetch progress:', err);
+        setError('Failed to load progress data');
+        // Use mock data as fallback
+        setData(generateMockData());
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProgress();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   if (!data) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        <ErrorMessage message="No progress data available" type="info" />
       </div>
     );
   }

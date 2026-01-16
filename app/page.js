@@ -10,6 +10,7 @@ import FeedbackSystem from './components/FeedbackSystem';
 import ProgressDashboard from './components/ProgressDashboard';
 import InterviewScheduler from './components/InterviewScheduler';
 import CompanyPrep from './components/CompanyPrep';
+import ErrorBoundary from './components/ErrorBoundary';
 import { useTheme } from './context/ThemeContext';
 
 const pageInfo = {
@@ -77,9 +78,11 @@ export default function Home() {
           <h1 className="text-3xl sm:text-4xl font-bold">{currentPage.title}</h1>
           <p className="text-lg mt-2 opacity-70">{currentPage.subtitle}</p>
         </div>
-        <div className="flex-grow flex items-start justify-center">
-          {renderContent()}
-        </div>
+        <ErrorBoundary>
+          <div className="flex-grow flex items-start justify-center">
+            {renderContent()}
+          </div>
+        </ErrorBoundary>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useTheme } from '../context/ThemeContext';
+import api from '../../lib/api';
 
 const interviewRounds = {
   behavioral: {
@@ -124,7 +125,7 @@ const MockInterview = ({ onComplete }) => {
     }
   };
 
-  const finishInterview = () => {
+  const finishInterview = async () => {
     clearInterval(timerRef.current);
     setIsInterviewActive(false);
     
@@ -133,6 +134,7 @@ const MockInterview = ({ onComplete }) => {
     const timeUsed = interviewRounds[selectedRound].duration * 60 - timeRemaining;
     
     const results = {
+      roundType: selectedRound,
       round: interviewRounds[selectedRound].name,
       totalQuestions,
       answeredQuestions,
@@ -146,6 +148,14 @@ const MockInterview = ({ onComplete }) => {
     };
     
     setInterviewResults(results);
+    
+    // Save to backend
+    try {
+      await api.interviews.save(results);
+    } catch (error) {
+      console.error('Failed to save interview session:', error);
+    }
+    
     if (onComplete) {
       onComplete(results);
     }
